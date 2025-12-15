@@ -11,44 +11,16 @@ player1={x=8,y=48}
 player2={x=224,y=48}
 ball_pos={x=48,y=16}
 ball_direction={x=0.6,y=0.8} -- tis a vector
-normals={
-	{x=0,y=1}, --top
-	{x=-1,y=0}, --p2
-	{x=0,y=-1}, --bot
-	{x=1,y=0} --p1
-}
 score={p1=0,p2=0}
 speed=1.5
 
--- all collision functions will return
--- both the collision flag and 
--- the normal vector
--- looks better me thinks
-
 function player_ball_collision(x,y)
-	local collision=false
-	local normal=false
-	
-	if x<=player1.x+8 and y>=player1.y and y<=player1.y+39 then
-		collision=true
-		normal=normals[4]
-	elseif x>=player2.x and y>=player2.y and y<=player2.y+39 then
-		collision=true
-		normal=normals[2]
-	end
-
-	return collision,normal
+	return (x<=player1.x+8 and y>=player1.y and y<=player1.y+39)
+						or(x>=player2.x and y>= player2.y and y<=player2.y+39)
 end
 
 function solid(id)
-	local solid=false
-	local normal=false
-	
-	if fget(id,0)then solid=true end
-	if fget(id,1)then normal=normals[1]end
-	if fget(id,3)then normal=normals[3]end
-	
-	return solid,normal
+	return fget(id,0)
 end
 
 -- just converting screen coordinates
@@ -58,39 +30,52 @@ function tile_id(x,y)
 	return mget(x//8,y//8)
 end
 
--- could would should create a vec2
--- dont want to tho
-function dot_product(u,v)
-	return u.x*v.x+u.y*v.y
-end
-
-function subtract_vectors(u,v)
-	return{x=u.x-v.x,y=u.y-v.y}
-end
-
-function mult_vec_by_scalar(s,u)
-	return{x=s*u.x,y=s*u.y}
-end
-
-function normalize(u)
-	local magnitude=math.sqrt(u.x^2+u.y^2)
-	return{x=u.x/magnitude,y=u.y/magnitude}
-end
-
--- r=d-2(d.n)n
-function reflection_vector(d,n)
-	local dn=dot_product(d,n)
-	local mult_n=mult_vec_by_scalar(2 * dn,n)
-	local r=subtract_vectors(d,mult_n)
-	return normalize(r)
-end
-
 function restart()
 	ball_pos.x=48
 	ball_pos.y=16
 	ball_direction.x=0.6
 	ball_direction.y=0.8
 	speed=1.5
+end
+
+function wall_ball_collision(new_ball_pos)
+	local collision_top=solid(tile_id(ball_pos.x,new_ball_pos.y))
+	local collision_bot=solid(tile_id(ball_pos.x+7,new_ball_pos.y+7))
+	
+	if collision_top or collision_bot then
+		ball_direction.y=-ball_direction.y
+		return true
+	end
+
+	return false
+end
+
+function hit_player(x,y)
+	local hit_p1=x>=player1.x and x<=player1.x+8 and y>=player1.y and y<=player1.y+39
+	local hit_p2=x>=player2.x and x<=player2.x+8 and y>=player2.y and y<=player2.y+39
+	
+	return hit_p1 or hit_p2
+end
+
+function player_ball_collision(new_ball_pos)
+	local collision_left=hit_player(new_ball_pos.x,ball_pos.y)
+		or hit_player(new_ball_pos.x,ball_pos.y+7)
+	local collision_right=hit_player(new_ball_pos.x+7,ball_pos.y)
+		or hit_player(new_ball_pos.x+7,ball_pos.y+7)
+	local collision_bot=hit_player(ball_pos.x,new_ball_pos.y+7)
+		or hit_player(ball_pos.x+7,new_ball_pos.y+7)
+	local collision_top=hit_player(ball_pos.x,new_ball_pos.y)
+		or hit_player(ball_pos.x+7,new_ball_pos.y)
+
+	if collision_left or collision_right then
+		ball_direction.x=-ball_direction.x
+		return true
+	elseif collision_bot or collision_top then
+		ball_direction.y=-ball_direction.y	
+		return true
+	end
+	
+	return false
 end
 
 -- lots of magic numbers
@@ -128,18 +113,13 @@ function TIC()
 		y=ball_pos.y+speed*ball_direction.y,
 	}
 	
-	local is_solid_top,top_normal=solid(tile_id(new_ball_pos.x,new_ball_pos.y))
-	local is_solid_bot,bot_normal=solid(tile_id(new_ball_pos.x,new_ball_pos.y+7))
-	local p1_collision,p1_normal=player_ball_collision(new_ball_pos.x,new_ball_pos.y)
-	local p2_collision,p2_normal=player_ball_collision(new_ball_pos.x+7,new_ball_pos.y)
-	local collision=is_solid_top or is_solid_bot or p1_collision or p2_collision
-	local normal=top_normal or bot_normal or p1_normal or p2_normal
-	
+	local collision=wall_ball_collision(new_ball_pos)
+		or player_ball_collision(new_ball_pos)
+		
 	if not collision then
 		ball_pos.x=new_ball_pos.x
 		ball_pos.y=new_ball_pos.y
 	else
-		ball_direction=reflection_vector(ball_direction,normal)
 		speed=speed+0.1
 	end
 	
