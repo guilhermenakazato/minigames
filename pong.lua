@@ -1,5 +1,5 @@
 -- title:   Pong
--- author: 	guillierme
+-- author: 	Guilherme Nakazato
 -- desc:    A simple pong game.
 -- site:    website link
 -- license: MIT License (change this to your license of choice)
