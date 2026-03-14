@@ -1,6 +1,6 @@
 -- title:  	Tic-Tac-Toe
 -- author:  Guilherme Nakazato
--- desc:    short description
+-- desc:    Tic-Tac-Toe. Not much to say about this.
 -- site:    website link
 -- license: MIT License 
 -- version: 0.1
@@ -10,12 +10,12 @@
 x=1
 y=1
 areas={{8,2}, {13,2}, {18,2},
-							{8,7}, {13,7}, {18,7},
-							{8,12}, {13,12}, {18,12}}
+	     {8,7}, {13,7}, {18,7},
+	     {8,12}, {13,12}, {18,12}}
 							
 progress={0,0,0,
-										0,0,0,
-										0,0,0}								
+		      0,0,0,
+		      0,0,0}								
 p1_turn=true
 turns=0
 winner=0
@@ -72,7 +72,8 @@ function check_winner(last_move)
 			return 1
 		elseif(sum==-3)then 
 			winner_text="circulo vencedor"
-			return -1 end
+			return -1 
+		end
 	end
 	
 	if turns==9 then 
@@ -92,8 +93,8 @@ function reset()
 	exclamation=0
 	reset_time=0
 	progress={0,0,0,
-											0,0,0,
-											0,0,0}
+			      0,0,0,
+			      0,0,0}
 end
 
 function mark_progress()
